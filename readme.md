@@ -6,6 +6,8 @@
 
 ___
 
+https://ropsten.etherscan.io/
+
 `0x9d6e0498d83623ECC6e50E6889Af0635EF4479Bf` - contract address
 
 `0xa6da39ba363063483e1ec00841bf6d037aaabc1c351ebf9ab526883bb4e9e916` - deploy transaction
