@@ -18,7 +18,7 @@ contract('Traking', (accounts) => {
 
   before(async () => {
     tracking = await Tracking.new('Samsung', 'Seoul, South Korea', 'Samsung Group is a South Korean group of ' +
-      'companies, one of the largest chaebols, founded in 1938. ');
+      'companies, one of the largest chaebols, founded in 1938.', [0, 1, 2]);
 
     await reverter.snapshot();
   });
@@ -29,8 +29,8 @@ contract('Traking', (accounts) => {
 
   describe('check point logic', async () => {
     it('should create points', async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
-      await tracking.createPoint('Some name2', 'Some country2', 'Some city2', 'Some address2', IVAN);
+      await tracking.createPoint('Some name1', 'Some address2', OLEG);
+      await tracking.createPoint('Some name2', 'Some address2', IVAN);
 
       const point0 = await tracking.points(0);
       const point1 = await tracking.points(1);
@@ -40,28 +40,45 @@ contract('Traking', (accounts) => {
     });
 
     it('should increase total point number', async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
+      await tracking.createPoint('Some name1', 'Some address2', OLEG);
       assert.equal((await tracking.pointsTotal()).toNumber(), 1);
 
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
+      await tracking.createPoint('Some name1', 'Some address2', OLEG);
       assert.equal((await tracking.pointsTotal()).toNumber(), 2);
     });
 
+    it('should update point information', async () => {
+      await tracking.createPoint('Some name1', 'Some address2', OLEG); // Point 0
+      await tracking.updatePoint(0, 'Some name new', 'Some address new');
+
+      const updatedPoint = await tracking.points(0);
+      assert.equal(updatedPoint.name, 'Some name new');
+      assert.equal(updatedPoint.pointAddress, 'Some address new');
+    });
+
+    it('should revert if point update not owner', async () => {
+      await tracking.createPoint('Some name1', 'Some address2', OLEG); // Point 0
+      await expect(tracking.updatePoint(0, 'Some name new', 'Some address new', { from: OLEG }))
+        .to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
     it('should revert if point created not from owner', async () => {
-      await expect(tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG,
+      await expect(tracking.createPoint('Some name1', 'Some address2', OLEG,
         { from: OLEG })).to.be.revertedWith('Ownable: caller is not the owner');
     });
+
     it('should transfer point ownership', async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
+      await tracking.createPoint('Some name1',  'Some address2', OLEG);
       await tracking.transferPointOwnership(0, IVAN);
 
       const point0 = await tracking.points(0);
       assert.equal(point0.pointOwner, IVAN);
     });
+
     it('should revert if point not found or sender not a OWNER', async () => {
       await expect(tracking.transferPointOwnership(0, IVAN)).to.be.revertedWith('E-84');
 
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
+      await tracking.createPoint('Some name1', 'Some address2', OLEG);
       await expect(tracking.transferPointOwnership(0, IVAN, { from: OLEG }))
         .to.be.revertedWith('Ownable: caller is not the owner');
     });
@@ -78,8 +95,8 @@ contract('Traking', (accounts) => {
     const batchNum = ['0000101', '0000102'];
 
     beforeEach(async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG); // Point 0
-      await tracking.createPoint('Some name2', 'Some country2', 'Some city2', 'Some address2', IVAN); // Point 1
+      await tracking.createPoint('Some name1', 'Some address2', OLEG); // Point 0
+      await tracking.createPoint('Some name2','Some address2', IVAN); // Point 1
     });
 
     it('should create point transfer', async () => {
@@ -96,9 +113,7 @@ contract('Traking', (accounts) => {
       await tracking.createProductTransfer(0, IPFSLink[1], types.transport, batchNum[0], { from: OLEG }); // PT 1
       await tracking.createProductTransfer(1, IPFSLink[1], types.realization, batchNum[1], { from: IVAN }); // PT 2
 
-      assert.equal(await tracking.batchNumberToProductTransfers(batchNum[0], 0), 0);
-      assert.equal(await tracking.batchNumberToProductTransfers(batchNum[0], 1), 1);
-      assert.equal(await tracking.batchNumberToProductTransfers(batchNum[1], 0), 2);
+      assert.equal((await tracking.getBatchNumbers()).length, 2);
     });
 
     it('should increase total product transfer number', async () => {

@@ -22,7 +22,7 @@ contract('Transaction statistic', (accounts) => {
 
   before(async () => {
     tracking = await Tracking.new('Samsung', 'Seoul, South Korea', 'Samsung Group is a South Korean group of '
-      + 'companies, one of the largest chaebols, founded in 1938. ');
+      + 'companies, one of the largest chaebols, founded in 1938.', [0, 1, 2]);
 
     const receipt = await web3.eth.getTransactionReceipt(tracking.transactionHash);
     gasUsageResults.push({ name: 'deploy()', gasUsage: receipt.gasUsed });
@@ -36,12 +36,12 @@ contract('Transaction statistic', (accounts) => {
 
   describe('Form transaction statistic', async () => {
     it('createPoint', async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG).then((res) => {
+      await tracking.createPoint('Some name1', 'Some address2', OLEG).then((res) => {
         gasUsageResults.push({ name: 'createPoint()', gasUsage: res.receipt.gasUsed });
       });
     });
     it('createProductTransfer', async () => {
-      await tracking.createPoint('Some name1', 'Some country1', 'Some city2', 'Some address2', OLEG);
+      await tracking.createPoint('Some name1', 'Some address2', OLEG);
 
       await tracking.createProductTransfer(0, 'Link', 0, '0000', { from: OLEG }).then((res) => {
         gasUsageResults.push({ name: 'createProductTransfer()', gasUsage: res.receipt.gasUsed });
